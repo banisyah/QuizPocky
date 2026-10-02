@@ -2,36 +2,56 @@ const app = document.getElementById("app");
 const sheetBg = document.getElementById("sheetBg");
 const sheet = document.getElementById("sheet");
 const LETTERS = ["A", "B", "C", "D"];
+const N = QUESTIONS.length;
 
+const svg = (d) => `<svg class="i" viewBox="0 0 24 24">${d}</svg>`;
 const ICON = {
-  check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`,
-  cross: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`,
-  bulb: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0012 3z"/></svg>`,
-  arrow: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`,
-  retry: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 109-9 9 9 0 00-6.4 2.7L3 8"/><path d="M3 3v5h5"/></svg>`,
-  logo: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h6M8 4v6M13 17h6M5 17l5-0M14 6l5 5M19 6l-5 5"/><path d="M5.5 15.5l4 4M9.5 15.5l-4 4"/></svg>`,
+  check: svg(`<path d="M5 12.5l4.5 4.5L19 7.5"/>`),
+  cross: svg(`<path d="M6 6l12 12M18 6L6 18"/>`),
+  bulb: svg(`<path d="M9 18h6M10 21h4M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0012 3z"/>`),
+  arrow: svg(`<path d="M5 12h14M13 6l6 6-6 6"/>`),
+  refresh: svg(`<path d="M3 12a9 9 0 109-9 9 9 0 00-6.4 2.7L3 8"/><path d="M3 3v5h5"/>`),
+  book: svg(`<rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/>`),
+  timer: svg(`<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/>`),
+  logo: svg(`<path d="M6 8h6M9 5v6M14 17h6M6 15.5l5 5M11 15.5l-5 5M15 6.5h5M17.5 4v5"/>`),
 };
+const logoBig = ICON.logo;
 
-let i = 0;           // soal aktif (0-based)
-let answers = [];    // jawaban user
-let locked = false;
-let hintOpen = false;
-let lastPct = 0;
+let i = 0, answers = [], locked = false, hintOpen = false;
 
 const $ = (s, el = app) => el.querySelector(s);
 const typeset = (el = document.body) =>
   window.renderMathInElement && renderMathInElement(el, {
-    delimiters: [{ left: "$", right: "$", display: false }],
-    throwOnError: false,
+    delimiters: [{ left: "$", right: "$", display: false }], throwOnError: false,
   });
-
 const norm = (v) => String(v ?? "").trim().replace(",", ".").replace(/^0+(?=\d)/, "");
 const isCorrect = (q, a) => norm(a) !== "" && norm(a).toUpperCase() === norm(q.ans).toUpperCase();
 const optText = (q, L) => q.opts[LETTERS.indexOf(L)] ?? "";
+const status = (k) => answers[k] === undefined || !QUESTIONS[k].done ? "" : isCorrect(QUESTIONS[k], answers[k]) ? "ok" : "bad";
+const counts = () => {
+  let ok = 0, bad = 0;
+  QUESTIONS.forEach((q, k) => { const s = status(k); if (s === "ok") ok++; else if (s === "bad") bad++; });
+  return { ok, bad, left: N - ok - bad };
+};
 
-/* ---------- transitions ---------- */
+/* ---------- shell ---------- */
+function shell(body, { wide = false, restart = false } = {}) {
+  return `
+    <div class="panel ${wide ? "wide" : ""}">
+      <div class="phead">
+        <div class="ttl">${ICON.timer} QuizPocky</div>
+        ${restart ? `<button class="iconbtn" id="restart" aria-label="Mulai ulang" title="Mulai ulang">${ICON.refresh}</button>` : ""}
+      </div>
+      <div class="pbody">${body}</div>
+    </div>`;
+}
+function bindRestart() {
+  const b = $("#restart");
+  if (b) b.onclick = () => { if (confirm("Mulai ulang quiz dari awal?")) go(start); };
+}
+
 function go(render) {
-  const cur = app.firstElementChild;
+  const cur = app.querySelector(".pbody > *");
   if (cur && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
     cur.classList.add("leave");
     setTimeout(render, 180);
@@ -41,7 +61,7 @@ function go(render) {
 /* ---------- confetti ---------- */
 function confetti(x, y, n = 28, spread = 1) {
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const colors = ["#5b4bff", "#8b5cf6", "#12a05c", "#f5a524", "#ff6b9d", "#38bdf8"];
+  const colors = ["#151a23", "#0b8fd9", "#16a34a", "#f5a524", "#ff6b6b", "#a78bfa"];
   for (let k = 0; k < n; k++) {
     const el = document.createElement("i");
     el.className = "confetti";
@@ -61,57 +81,89 @@ function confetti(x, y, n = 28, spread = 1) {
 
 /* ---------- start ---------- */
 function start() {
-  i = 0; answers = []; locked = false; hintOpen = false; lastPct = 0;
-  app.innerHTML = `
-    <section class="screen card hero">
-      <div class="logo">${ICON.logo}</div>
-      <h1>Quiz<span>Pocky</span></h1>
-      <p class="muted">Latihan soal Eduversal Mathematics Competition 2025 · Tingkat Kota Kelas 7</p>
-      <div class="chips">
-        <span class="chip">${QUESTIONS.length} soal</span>
-        <span class="chip">Hint + cara pengerjaan</span>
-        <span class="chip">Tanpa login</span>
+  i = 0; answers = []; locked = false; hintOpen = false;
+  QUESTIONS.forEach((q) => (q.done = false));
+  app.innerHTML = shell(`
+    <div class="screen hero">
+      <div class="logo">${logoBig}</div>
+      <h1>Latihan Math Competition</h1>
+      <p class="muted">Soal Eduversal Mathematics Competition (EMC) 2025 · Tingkat Kota · Kelas 7</p>
+      <div class="facts">
+        <div class="fact"><b>${N}</b><span>Soal</span></div>
+        <div class="fact"><b>25 + 5</b><span>Pilgan + isian</span></div>
+        <div class="fact"><b>Hint</b><span>Cara pengerjaan</span></div>
       </div>
-      <button class="btn primary big" id="go">Mulai Quiz ${ICON.arrow}</button>
-    </section>`;
+      <button class="btn dark big" id="go">Mulai Quiz ${ICON.arrow}</button>
+    </div>`);
   $("#go").onclick = () => go(showQuestion);
+}
+
+/* ---------- navigation widgets ---------- */
+function stripHTML() {
+  const from = Math.max(0, Math.min(i - 3, N - 7));
+  return Array.from({ length: 7 }, (_, k) => {
+    const n = from + k, s = n === i ? "cur" : status(n);
+    return `<div class="n ${s}">${n + 1}</div>`;
+  }).join("");
+}
+function asideHTML() {
+  const c = counts();
+  return `
+    <div class="acard"><h4>Peta Soal <span class="badge blue">${i + 1}/${N}</span></h4>
+      <div class="grid">${QUESTIONS.map((_, k) => `<div class="cell ${k === i ? "cur" : status(k)}">${k + 1}</div>`).join("")}</div>
+      <div class="legend"><span><i style="background:var(--ok)"></i>Benar</span><span><i style="background:var(--bad)"></i>Salah</span><span><i style="background:var(--dark)"></i>Sekarang</span></div>
+    </div>
+    <div class="acard"><div class="mini">
+      <div class="g"><b>${c.ok}</b><span>Benar</span></div>
+      <div class="r"><b>${c.bad}</b><span>Salah</span></div>
+      <div><b>${c.left}</b><span>Sisa</span></div>
+    </div></div>`;
+}
+function refreshNav() {
+  const s = $("#strip"), a = $("#aside"), sc = $("#score");
+  if (s) s.innerHTML = stripHTML();
+  if (a) a.innerHTML = asideHTML();
+  if (sc) { const c = counts(); sc.innerHTML = `<span class="badge green">${ICON.check} ${c.ok}</span><span class="badge red">${ICON.cross} ${c.bad}</span>`; }
 }
 
 /* ---------- question ---------- */
 function showQuestion() {
   const q = QUESTIONS[i];
   locked = false; hintOpen = false;
-  app.innerHTML = `
-    <div class="screen">
-      <div class="topbar">
-        <div class="bar"><i id="fill" style="width:${lastPct}%"></i></div>
-        <div class="count">${i + 1}<small> / ${QUESTIONS.length}</small></div>
+  app.innerHTML = shell(`
+    <div class="quiz screen">
+      <div class="main" style="display:grid;gap:16px;min-width:0;align-content:start">
+        <div class="metabar">
+          <div class="c">${ICON.book} <span>EMC 2025 · Kelas 7</span></div>
+          <div class="sc" id="score"></div>
+        </div>
+        <div class="strip" id="strip"></div>
+        <section class="qcard">
+          <div class="qtop">
+            <span class="no">Soal ${i + 1}</span>
+            <span class="badge blue">${q.type === "mc" ? "Pilihan ganda" : "Isian singkat"}</span>
+          </div>
+          <div class="qtext">${q.q}</div>
+          ${q.type === "mc"
+            ? `<div class="opts">${q.opts.map((o, k) => `
+                <button class="opt rise" style="--i:${k + 1}" data-k="${LETTERS[k]}">
+                  <span class="letter">${LETTERS[k]}</span><span class="label">${o}</span><span class="mark"></span>
+                </button>`).join("")}</div>`
+            : `<div class="rise" style="--i:1"><input class="num" id="num" inputmode="decimal" autocomplete="off" placeholder="Ketik jawabanmu (angka)"></div>`}
+          <div class="actions">
+            <button class="btn hintbtn" id="hint">${ICON.bulb} Hint</button>
+            <span class="sp"></span>
+            <button class="btn dark" id="submit" disabled>Jawab</button>
+          </div>
+          <div class="solution-wrap" id="solWrap"><div>
+            <div class="solution"><div class="t">${ICON.bulb} Cara mengerjakan</div><div class="b">${q.hint}</div></div>
+          </div></div>
+        </section>
       </div>
-      <section class="card">
-        <div class="qmeta">
-          <div class="qnum">${i + 1}</div>
-          <span class="qtype">${q.type === "mc" ? "Pilihan ganda" : "Isian singkat"}</span>
-        </div>
-        <div class="qtext">${q.q}</div>
-        ${q.type === "mc"
-          ? `<div class="opts">${q.opts.map((o, k) => `
-              <button class="opt rise" style="--i:${k + 1}" data-k="${LETTERS[k]}">
-                <span class="letter">${LETTERS[k]}</span><span class="label">${o}</span>
-                <span class="mark"></span>
-              </button>`).join("")}</div>`
-          : `<div class="numwrap rise" style="--i:1"><input class="num" id="num" inputmode="decimal" autocomplete="off" placeholder="Ketik jawabanmu (angka)"></div>`}
-        <div class="actions">
-          <button class="btn ghost" id="hint">${ICON.bulb} Hint</button>
-          <span class="sp"></span>
-          <button class="btn primary" id="submit" disabled>Jawab</button>
-        </div>
-        <div class="solution-wrap" id="solWrap"><div>
-          <div class="solution"><div class="t">${ICON.bulb} Cara mengerjakan</div><div>${q.hint}</div></div>
-        </div></div>
-      </section>
-    </div>`;
-  const pct = (i / QUESTIONS.length) * 100;
-  requestAnimationFrame(() => requestAnimationFrame(() => { $("#fill").style.width = pct + "%"; lastPct = pct; }));
+      <aside class="aside" id="aside"></aside>
+    </div>`, { wide: true, restart: true });
+  bindRestart();
+  refreshNav();
 
   const submit = $("#submit");
   if (q.type === "mc") {
@@ -126,19 +178,16 @@ function showQuestion() {
     const inp = $("#num");
     inp.oninput = () => { answers[i] = inp.value; submit.disabled = norm(inp.value) === ""; };
     inp.onkeydown = (e) => { if (e.key === "Enter" && !submit.disabled) submit.click(); };
-    setTimeout(() => inp.focus(), 350);
+    setTimeout(() => inp.focus({ preventScroll: true }), 350);
   }
   submit.onclick = submitAnswer;
-  $("#hint").onclick = () => {
-    hintOpen = !hintOpen;
-    $("#solWrap").classList.toggle("open", hintOpen);
-  };
+  $("#hint").onclick = () => { hintOpen = !hintOpen; $("#solWrap").classList.toggle("open", hintOpen); };
   typeset(app);
 }
 
 function submitAnswer() {
   const q = QUESTIONS[i];
-  locked = true;
+  locked = true; q.done = true;
   const ok = isCorrect(q, answers[i]);
   $("#submit").disabled = true;
 
@@ -155,16 +204,16 @@ function submitAnswer() {
     inp.disabled = true;
     inp.classList.add(ok ? "correct" : "wrong");
   }
+  refreshNav();
   setTimeout(() => showSheet(q, ok), 550);
 }
 
 /* ---------- feedback sheet ---------- */
 function showSheet(q, ok) {
-  const last = i === QUESTIONS.length - 1;
+  const last = i === N - 1;
   const a = answers[i];
-  const correctHTML = q.type === "mc"
-    ? `<span class="letter">${q.ans}</span><span class="v">${optText(q, q.ans)}</span>`
-    : `<span class="v">${q.ans}</span>`;
+  const correct = q.type === "mc"
+    ? `<span class="letter">${q.ans}</span><span>${optText(q, q.ans)}</span>` : `<span>${q.ans}</span>`;
   const yours = q.type === "mc" ? `${a}. ${optText(q, a)}` : a;
 
   sheet.className = "sheet " + (ok ? "ok" : "bad");
@@ -176,17 +225,14 @@ function showSheet(q, ok) {
       <p class="sub muted">${ok ? "Jawabanmu pas. Lanjut terus!" : "Tenang, ini jawaban yang benar:"}</p></div>
     </div>
     ${ok ? "" : `
-      <div class="answer-box"><div>
-        <small>Jawaban yang benar</small>
-        <div style="display:flex;align-items:center;gap:10px;margin-top:4px">${correctHTML}</div>
-      </div></div>
+      <div class="answer-box"><small>Jawaban yang benar</small><div class="row">${correct}</div></div>
       <p class="yours">Jawabanmu: <b>${yours}</b> · buka <b>Hint</b> untuk lihat cara pengerjaan.</p>`}
-    <button class="btn primary" id="next">${last ? "Lihat Hasil" : "Soal Berikutnya"} ${ICON.arrow}</button>`;
+    <button class="btn dark block" id="next">${last ? "Lihat Hasil" : "Soal Berikutnya"} ${ICON.arrow}</button>`;
   typeset(sheet);
   sheetBg.classList.add("show");
   sheet.classList.add("show");
   if (!ok) { hintOpen = true; $("#solWrap").classList.add("open"); }
-  if (ok) confetti(innerWidth / 2, innerHeight - 220, 26);
+  else confetti(innerWidth / 2, innerHeight - 220, 26);
   const next = $("#next", sheet);
   next.focus({ preventScroll: true });
   next.onclick = () => {
@@ -201,22 +247,19 @@ function closeSheet() { sheet.classList.remove("show"); sheetBg.classList.remove
 function showResult() {
   const wrong = [];
   QUESTIONS.forEach((q, k) => { if (!isCorrect(q, answers[k])) wrong.push(k); });
-  const total = QUESTIONS.length, right = total - wrong.length;
-  const pct = Math.round((right / total) * 100);
-  const msg = pct === 100 ? "Sempurna! 🎉" : pct >= 80 ? "Hebat banget!" : pct >= 60 ? "Bagus, terus latihan!" : "Jangan menyerah, coba lagi!";
+  const right = N - wrong.length;
+  const pct = Math.round((right / N) * 100);
+  const msg = pct === 100 ? "Sempurna!" : pct >= 80 ? "Hebat banget!" : pct >= 60 ? "Bagus, terus latihan!" : "Jangan menyerah, coba lagi!";
 
-  app.innerHTML = `
+  app.innerHTML = shell(`
     <div class="screen">
-      <section class="card result">
+      <section class="result">
         <div class="ring">
-          <svg viewBox="0 0 190 190">
-            <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b4bff"/><stop offset="1" stop-color="#b18cff"/></linearGradient></defs>
-            <circle class="track" cx="95" cy="95" r="84"/><circle class="fill" id="ringFill" cx="95" cy="95" r="84"/>
-          </svg>
+          <svg viewBox="0 0 190 190"><circle class="track" cx="95" cy="95" r="84"/><circle class="fill" id="ringFill" cx="95" cy="95" r="84"/></svg>
           <div class="mid"><b id="pct">0%</b><span>skor kamu</span></div>
         </div>
         <h2>${msg}</h2>
-        <div class="muted">${right} dari ${total} soal dijawab benar</div>
+        <div class="muted">${right} dari ${N} soal dijawab benar</div>
         <div class="stats">
           <div class="stat ok">${ICON.check}<div><b data-count="${right}">0</b><span>Benar</span></div></div>
           <div class="stat bad">${ICON.cross}<div><b data-count="${wrong.length}">0</b><span>Salah</span></div></div>
@@ -226,8 +269,8 @@ function showResult() {
           <div class="pills">${wrong.map((k) => `<span class="pill">${k + 1}</span>`).join("")}</div></div>` : ""}
       </section>
       ${wrong.length ? `<h2 class="section-title">Jawaban yang seharusnya</h2>${wrong.map(reviewItem).join("")}` : ""}
-      <div class="retry-wrap"><button class="btn primary big" id="retry">${ICON.retry} Ulangi Quiz</button></div>
-    </div>`;
+      <div class="retry-wrap"><button class="btn dark big" id="retry">${ICON.refresh} Ulangi Quiz</button></div>
+    </div>`);
   $("#retry").onclick = () => go(start);
   typeset(app);
   window.scrollTo(0, 0);
@@ -237,9 +280,7 @@ function showResult() {
   }));
   countUp($("#pct"), pct, "%");
   app.querySelectorAll("[data-count]").forEach((el) => countUp(el, +el.dataset.count));
-  if (pct >= 70) setTimeout(() => {
-    confetti(innerWidth / 2, innerHeight * .35, 60, 1.6);
-  }, 600);
+  if (pct >= 70) setTimeout(() => confetti(innerWidth / 2, innerHeight * .35, 60, 1.6), 600);
 }
 
 function countUp(el, to, suffix = "") {
@@ -256,15 +297,15 @@ function reviewItem(k, n) {
   const q = QUESTIONS[k], a = answers[k];
   const fmt = (L) => q.type === "mc" ? `<b>${L}.</b> ${optText(q, L)}` : L;
   return `
-    <section class="card review rise" style="--i:${Math.min(n, 8)}">
-      <div class="top"><div class="qn">${k + 1}</div><b>Soal ${k + 1}</b></div>
+    <section class="review rise" style="--i:${Math.min(n, 8)}">
+      <div class="top">Soal ${k + 1} <span class="badge red">Salah</span></div>
       <div class="qprev">${q.q}</div>
       <div class="cmp">
         <div class="you"><small>Jawabanmu</small><div class="v">${a ? fmt(a) : "(kosong)"}</div></div>
         <div class="key"><small>Jawaban benar</small><div class="v">${fmt(q.ans)}</div></div>
       </div>
       <details class="how"><summary>Lihat cara pengerjaan</summary>
-        <div class="solution"><div>${q.hint}</div></div>
+        <div class="solution"><div class="b">${q.hint}</div></div>
       </details>
     </section>`;
 }
