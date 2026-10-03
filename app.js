@@ -2,7 +2,7 @@ const app = document.getElementById("app");
 const sheetBg = document.getElementById("sheetBg");
 const sheet = document.getElementById("sheet");
 const LETTERS = ["A", "B", "C", "D"];
-const N = QUESTIONS.length;
+let QUIZ = null, QUESTIONS = [], N = 0;   // paket soal yang sedang dikerjakan
 
 const svg = (d) => `<svg class="i" viewBox="0 0 24 24">${d}</svg>`;
 const ICON = {
@@ -14,6 +14,7 @@ const ICON = {
   book: svg(`<rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/>`),
   timer: svg(`<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/>`),
   logo: svg(`<path d="M6 8h6M9 5v6M14 17h6M6 15.5l5 5M11 15.5l-5 5M15 6.5h5M17.5 4v5"/>`),
+  home: svg(`<path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/>`),
 };
 const logoBig = ICON.logo;
 
@@ -35,19 +36,21 @@ const counts = () => {
 };
 
 /* ---------- shell ---------- */
-function shell(body, { wide = false, restart = false } = {}) {
+function shell(body, { wide = false, restart = false, home = false } = {}) {
   return `
     <div class="panel ${wide ? "wide" : ""}">
       <div class="phead">
-        <div class="ttl">${ICON.timer} QuizPocky</div>
+        <div class="ttl">${ICON.timer} QuizPocky${QUIZ && (restart || home) ? `<span class="crumb">${QUIZ.short}</span>` : ""}</div>
+        ${home ? `<button class="iconbtn flat" id="home" aria-label="Pilih soal lain" title="Pilih soal lain">${ICON.home}</button>` : ""}
         ${restart ? `<button class="iconbtn" id="restart" aria-label="Mulai ulang" title="Mulai ulang">${ICON.refresh}</button>` : ""}
       </div>
       <div class="pbody">${body}</div>
     </div>`;
 }
-function bindRestart() {
-  const b = $("#restart");
-  if (b) b.onclick = () => { if (confirm("Mulai ulang quiz dari awal?")) go(start); };
+function bindRestart(inProgress = true) {
+  const r = $("#restart"), h = $("#home");
+  if (r) r.onclick = () => { if (confirm("Mulai ulang quiz dari awal?")) go(() => startQuiz(QUIZ.id)); };
+  if (h) h.onclick = () => { if (!inProgress || confirm("Keluar dan pilih soal lain? Progress quiz ini akan hilang.")) go(landing); };
 }
 
 function go(render) {
@@ -79,23 +82,48 @@ function confetti(x, y, n = 28, spread = 1) {
   }
 }
 
-/* ---------- start ---------- */
-function start() {
+/* ---------- landing: pilih paket soal ---------- */
+function landing() {
+  QUIZ = null; QUESTIONS = []; N = 0;
+  closeSheet();
+  app.innerHTML = shell(`
+    <div class="screen">
+      <div class="hero">
+        <div class="logo">${logoBig}</div>
+        <h1>Latihan Math Competition</h1>
+        <p class="muted">Pilih paket soal yang mau kamu kerjakan. Ada hint dan cara pengerjaan di setiap nomor.</p>
+      </div>
+      <div class="picker">
+        ${QUIZZES.map((z, k) => {
+          const mc = z.questions.filter((q) => q.type === "mc").length, num = z.questions.length - mc;
+          return `
+          <button class="qz rise" style="--i:${k + 1}" data-id="${z.id}">
+            <div class="mono">${z.mono}</div>
+            <div class="qz-body">
+              <div class="qz-title">${z.title}</div>
+              <div class="qz-org muted">${z.org}</div>
+              <p class="qz-desc">${z.desc}</p>
+              <div class="qz-tags">
+                <span class="badge blue">${z.level}</span>
+                <span class="badge gray">${z.questions.length} soal</span>
+                <span class="badge gray">${num ? `${mc} pilgan + ${num} isian` : "Pilihan ganda"}</span>
+              </div>
+            </div>
+            <span class="qz-go">${ICON.arrow}</span>
+          </button>`;
+        }).join("")}
+      </div>
+    </div>`, { wide: true });
+  app.querySelectorAll(".qz").forEach((b) => (b.onclick = () => go(() => startQuiz(b.dataset.id))));
+  window.scrollTo(0, 0);
+}
+
+function startQuiz(id) {
+  QUIZ = QUIZZES.find((z) => z.id === id);
+  QUESTIONS = QUIZ.questions; N = QUESTIONS.length;
   i = 0; answers = []; locked = false; hintOpen = false;
   QUESTIONS.forEach((q) => (q.done = false));
-  app.innerHTML = shell(`
-    <div class="screen hero">
-      <div class="logo">${logoBig}</div>
-      <h1>Latihan Math Competition</h1>
-      <p class="muted">Soal Eduversal Mathematics Competition (EMC) 2025 · Tingkat Kota · Kelas 7</p>
-      <div class="facts">
-        <div class="fact"><b>${N}</b><span>Soal</span></div>
-        <div class="fact"><b>25 + 5</b><span>Pilgan + isian</span></div>
-        <div class="fact"><b>Hint</b><span>Cara pengerjaan</span></div>
-      </div>
-      <button class="btn dark big" id="go">Mulai Quiz ${ICON.arrow}</button>
-    </div>`);
-  $("#go").onclick = () => go(showQuestion);
+  showQuestion();
 }
 
 /* ---------- navigation widgets ---------- */
@@ -134,7 +162,7 @@ function showQuestion() {
     <div class="quiz screen">
       <div class="main" style="display:grid;gap:16px;min-width:0;align-content:start">
         <div class="metabar">
-          <div class="c">${ICON.book} <span>EMC 2025 · Kelas 7</span></div>
+          <div class="c">${ICON.book} <span>${QUIZ.title}</span></div>
           <div class="sc" id="score"></div>
         </div>
         <div class="strip" id="strip"></div>
@@ -161,7 +189,7 @@ function showQuestion() {
         </section>
       </div>
       <aside class="aside" id="aside"></aside>
-    </div>`, { wide: true, restart: true });
+    </div>`, { wide: true, restart: true, home: true });
   bindRestart();
   refreshNav();
 
@@ -269,9 +297,10 @@ function showResult() {
           <div class="pills">${wrong.map((k) => `<span class="pill">${k + 1}</span>`).join("")}</div></div>` : ""}
       </section>
       ${wrong.length ? `<h2 class="section-title">Jawaban yang seharusnya</h2>${wrong.map(reviewItem).join("")}` : ""}
-      <div class="retry-wrap"><button class="btn dark big" id="retry">${ICON.refresh} Ulangi Quiz</button></div>
+      <div class="retry-wrap"><button class="btn dark big" id="retry">${ICON.refresh} Ulangi Quiz</button><button class="btn big" id="other">${ICON.home} Pilih Soal Lain</button></div>
     </div>`);
-  $("#retry").onclick = () => go(start);
+  $("#retry").onclick = () => go(() => startQuiz(QUIZ.id));
+  $("#other").onclick = () => go(landing);
   typeset(app);
   window.scrollTo(0, 0);
 
@@ -310,4 +339,4 @@ function reviewItem(k, n) {
     </section>`;
 }
 
-start();
+landing();

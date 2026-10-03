@@ -2,7 +2,7 @@
 // type "mc" = pilihan ganda (ans = huruf), type "num" = isian singkat (ans = angka)
 const r = String.raw;
 
-const QUESTIONS = [
+const EMC_QUESTIONS = [
   {
     type: "mc",
     q: r`Hasil penyederhanaan pecahan di bawah adalah ...<br>$\dfrac{\frac12+\frac14}{\frac14+\frac18}=$`,
