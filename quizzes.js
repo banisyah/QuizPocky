@@ -19,5 +19,14 @@ const QUIZZES = [
     desc: "Soal olimpiade: aljabar, teori bilangan, geometri, dan kombinatorika. Semua pilihan ganda.",
     mono: "IY",
     questions: IYSLO_QUESTIONS,
+  },  {
+    id: "iyslo-bi-2025",
+    short: "IYSLO 2025 · B. Indonesia",
+    title: "IYSLO 2025 · Bahasa Indonesia Level 4",
+    org: "Indonesian Youth Science and Language Olympiad",
+    level: "Level 4 · SMP",
+    desc: "Pemahaman bacaan, kebahasaan (ejaan, kata baku, kalimat efektif), sastra, dan penalaran. Topik tiap nomor mengikuti naskah asli, teks dan kalimatnya sudah disunting.",
+    mono: "BI",
+    questions: BAHASA_QUESTIONS,
   },
 ];

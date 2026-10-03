@@ -171,6 +171,7 @@ function showQuestion() {
             <span class="no">Soal ${i + 1}</span>
             <span class="badge blue">${q.type === "mc" ? "Pilihan ganda" : "Isian singkat"}</span>
           </div>
+          ${q.passage ? `<div class="passage"><div class="pt">${q.passageTitle || "Teks"}</div>${q.passage}</div>` : ""}
           <div class="qtext">${q.q}</div>
           ${q.type === "mc"
             ? `<div class="opts">${q.opts.map((o, k) => `
@@ -329,6 +330,7 @@ function reviewItem(k, n) {
     <section class="review rise" style="--i:${Math.min(n, 8)}">
       <div class="top">Soal ${k + 1} <span class="badge red">Salah</span></div>
       <div class="qprev">${q.q}</div>
+      ${q.passage ? `<details class="how"><summary>Lihat teks</summary><div class="passage" style="margin-top:10px">${q.passage}</div></details>` : ""}
       <div class="cmp">
         <div class="you"><small>Jawabanmu</small><div class="v">${a ? fmt(a) : "(kosong)"}</div></div>
         <div class="key"><small>Jawaban benar</small><div class="v">${fmt(q.ans)}</div></div>
