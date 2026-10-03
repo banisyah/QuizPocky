@@ -316,3 +316,5 @@ details.how .solution { opacity: 1; transform: none; }
 .fig svg { max-width: 100%; height: auto; color: var(--text); }
 pre.sum { display: inline-block; margin: 14px 0 0; padding: 12px 18px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); font: 600 1.25rem/1.5 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: .12em; }
 .qtext .katex { font-size: 1.05em; }
+.fig img { max-width: 100%; height: auto; background: #fff; border-radius: 14px; padding: 8px; border: 1px solid var(--line); }
+svg.pat { display: block; color: var(--text); height: auto; max-width: 100%; }

@@ -1,6 +1,26 @@
 // Sumber soal: IYSLO 2025 (Indonesian Youth Science and Language Olympiad) - Matematika Level 4
-// Soal asli no. 22 (pola spiral, gambar pilihan tidak ada) dan no. 23 (kunci tidak dapat diverifikasi) tidak dimasukkan.
+// Soal asli no. 23 (kunci tidak dapat diverifikasi) tidak dimasukkan.
+// Soal asli no. 22: pilihan "Pola A-D" di PDF hanya label tanpa gambar, jadi pilihannya dibuat ulang (patternSvg).
 const rr = String.raw;
+
+// Gambar kecil tiga kotak berpanah untuk pilihan jawaban soal pola. cells = posisi [kolom, baris] untuk 2024, 2025, 2026.
+function patternSvg(id, cells) {
+  const W = 54, H = 26, GX = 78, GY = 54, P = 6;
+  const xs = cells.map((c) => P + c[0] * GX), ys = cells.map((c) => P + c[1] * GY);
+  const vw = Math.max(...xs) + W + P, vh = Math.max(...ys) + H + P;
+  const mk = `m${id}`;
+  let out = `<svg class="pat" viewBox="0 0 ${vw} ${vh}" width="${vw * 0.9}" role="img" aria-label="Pola ${id}"><defs><marker id="${mk}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1l8 4-8 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>`;
+  [2024, 2025, 2026].forEach((t, k) => {
+    out += `<rect x="${xs[k]}" y="${ys[k]}" width="${W}" height="${H}" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/><text x="${xs[k] + W / 2}" y="${ys[k] + 17.5}" text-anchor="middle" font-size="13" font-weight="600" fill="currentColor">${t}</text>`;
+  });
+  for (let k = 0; k < 2; k++) {
+    const dx = Math.sign(cells[k + 1][0] - cells[k][0]), dy = Math.sign(cells[k + 1][1] - cells[k][1]);
+    const cx = xs[k] + W / 2, cy = ys[k] + H / 2;
+    const half = dx ? W / 2 + 3 : H / 2 + 3, len = (dx ? GX - W : GY - H) - 6;
+    out += `<line x1="${cx + dx * half}" y1="${cy + dy * half}" x2="${cx + dx * (half + len)}" y2="${cy + dy * (half + len)}" stroke="currentColor" stroke-width="1.6" marker-end="url(#${mk})"/>`;
+  }
+  return out + `</svg>`;
+}
 
 const IYSLO_QUESTIONS = [
   {
@@ -253,6 +273,22 @@ const IYSLO_QUESTIONS = [
       Siklus $6,9,2,3,4$ berulang tiap 5 digit; digit ke-$n$ dengan $n\equiv0\pmod5$ adalah $2$. Karena $2025\equiv0\pmod5$, satu kemungkinan adalah <b>2</b>.<br>
       Kemungkinan lain: keluar siklus lewat $6\to8\to5$ tepat di digit ke-2025 (karena $2022\equiv2\pmod5$) &rarr; <b>5</b>.<br>
       Jumlahnya $2+5=7$.`,
+  },
+  {
+    type: "mc",
+    q: rr`Agus menyusun bilangan-bilangan asli berurutan dalam pola seperti pada gambar di bawah ini. <b>Pola yang akan muncul untuk bilangan 2024, 2025, dan 2026 adalah ...</b>
+      <figure class="fig"><img src="images/iyslo-22.png" width="360" alt="Bilangan 1 sampai 18 disusun melingkar keluar dengan panah: 1 ke kanan ke 2, turun ke 3, ke kiri 4 dan 5, naik 6 dan 7, ke kanan 8, 9, 10, turun 11, 12, 13, ke kiri 14 sampai 17, naik 18"></figure>`,
+    opts: [
+      patternSvg("A", [[0, 0], [1, 0], [1, 1]]),
+      patternSvg("B", [[2, 0], [1, 0], [0, 0]]),
+      patternSvg("C", [[0, 0], [0, 1], [0, 2]]),
+      patternSvg("D", [[0, 0], [1, 0], [2, 0]]),
+    ],
+    ans: "D",
+    hint: rr`Sudut kanan atas spiral adalah bilangan $10,\ 26,\ 50,\ \ldots$ yaitu $n^2+1$ untuk $n=3,5,7,\ldots$<br>
+      Karena $2025=45^2$, maka $2026=45^2+1$ adalah sudut kanan atas berikutnya, tempat arah berubah dari kanan menjadi turun.<br>
+      Bilangan $2024$ dan $2025$ ada tepat di kirinya, satu baris. Jadi pola 2024, 2025, 2026 adalah tiga kotak mendatar yang berurutan ke kanan: $2024\to2025\to2026$.<br>
+      <i>Catatan: di PDF asli, pilihan "Pola A–D" hanya berupa label tanpa gambar. Keempat pilihan di sini dibuat ulang, dengan jawaban benar tetap di huruf D sesuai kunci resmi.</i>`,
   },
   {
     type: "mc",
