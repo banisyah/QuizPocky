@@ -322,3 +322,36 @@ pre.sum { display: inline-block; margin: 14px 0 0; padding: 12px 18px; border-ra
 .passage .pt { font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 8px; }
 .passage p { margin: 0 0 10px; } .passage p:last-child { margin-bottom: 0; }
 .passage .poem { padding-left: 14px; border-left: 3px solid var(--line); font-style: italic; }
+
+/* kartu multi-versi di landing */
+.qz.multi { display: block; cursor: default; padding: 20px; }
+.qz.multi:hover { transform: none; box-shadow: none; background: var(--soft); border-color: var(--line); }
+.qz.multi:active { transform: none; }
+.qz-top { display: flex; gap: 16px; align-items: flex-start; }
+.qz.multi .qz-body { padding-right: 0; }
+.qz.multi:hover .mono { transform: none; }
+.vers { margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--line); }
+.vers-lbl { font-size: .76rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 10px; }
+.vchips { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 8px; }
+.vchip {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left;
+  padding: 10px 12px; border-radius: 14px; background: var(--panel); border: 1.5px solid var(--line);
+  transition: transform .2s var(--spring), border-color .2s, box-shadow .2s, background .2s;
+}
+.vchip:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--text) 30%, var(--line)); box-shadow: 0 8px 18px -10px rgba(20, 30, 50, .3); }
+.vchip:active { transform: scale(.97); }
+.vchip .vn { font-weight: 700; font-size: .95rem; }
+.vchip .vs { display: inline-flex; align-items: center; gap: 4px; font-size: .76rem; color: var(--muted); font-weight: 500; }
+.vchip .vs svg { width: 13px; height: 13px; stroke-width: 3; }
+.vchip.done { background: var(--ok-soft); border-color: color-mix(in srgb, var(--ok) 35%, transparent); }
+.vchip.done .vs { color: var(--ok); font-weight: 600; }
+.vchip.mix { border-style: dashed; }
+.vers-note { margin: 12px 0 14px; font-size: .82rem; }
+.cta { width: 100%; }
+.qz-tags .badge svg { width: 13px; height: 13px; stroke-width: 3; }
+.result-actions { display: grid; gap: 10px; margin-top: 26px; grid-template-columns: 1fr; }
+@media (min-width: 620px) { .result-actions { grid-template-columns: 1fr 1fr; } }
+.result-actions .btn.big { padding: 0 18px; height: 54px; }
+.linkbtn { color: var(--muted); font-size: .85rem; text-decoration: underline; text-underline-offset: 3px; }
+.linkbtn:hover { color: var(--text); }
+.qz.multi { grid-column: 1 / -1; }

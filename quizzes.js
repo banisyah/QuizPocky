@@ -1,4 +1,6 @@
-// Daftar paket soal yang tampil di landing page. Tambah paket baru: buat file soal, lalu daftarkan di sini.
+// Daftar paket soal yang tampil di landing page.
+// Setiap paket punya satu atau lebih "versi". Versi berbeda menguji topik yang sama per nomor,
+// dengan teks/kalimat berbeda. shuffle: true = urutan pilihan jawaban diacak tiap kali quiz dimulai.
 const QUIZZES = [
   {
     id: "emc2025",
@@ -8,7 +10,7 @@ const QUIZZES = [
     level: "Kelas 7",
     desc: "Aljabar, geometri, peluang, dan teori bilangan dasar. Campuran pilihan ganda dan isian singkat.",
     mono: "EMC",
-    questions: EMC_QUESTIONS,
+    versions: [{ id: "1", questions: EMC_QUESTIONS }],
   },
   {
     id: "iyslo2025",
@@ -18,15 +20,21 @@ const QUIZZES = [
     level: "Level 4 · SMP",
     desc: "Soal olimpiade: aljabar, teori bilangan, geometri, dan kombinatorika. Semua pilihan ganda.",
     mono: "IY",
-    questions: IYSLO_QUESTIONS,
-  },  {
+    versions: [{ id: "1", questions: IYSLO_QUESTIONS }],
+  },
+  {
     id: "iyslo-bi-2025",
     short: "IYSLO 2025 · B. Indonesia",
     title: "IYSLO 2025 · Bahasa Indonesia Level 4",
     org: "Indonesian Youth Science and Language Olympiad",
     level: "Level 4 · SMP",
-    desc: "Pemahaman bacaan, kebahasaan (ejaan, kata baku, kalimat efektif), sastra, dan penalaran. Topik tiap nomor mengikuti naskah asli, teks dan kalimatnya sudah disunting.",
+    desc: "Pemahaman bacaan, kebahasaan (ejaan, kata baku, kalimat efektif), sastra, dan penalaran. Ada 3 versi dengan topik tiap nomor yang sama.",
     mono: "BI",
-    questions: BAHASA_QUESTIONS,
+    shuffle: true,
+    versions: [
+      { id: "1", questions: BAHASA_QUESTIONS },
+      { id: "2", questions: BAHASA_V2 },
+      { id: "3", questions: BAHASA_V3 },
+    ],
   },
 ];

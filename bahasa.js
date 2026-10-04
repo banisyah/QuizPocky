@@ -42,7 +42,7 @@ const BAHASA_QUESTIONS = [
     ans: "C",
     hint: `Gagasan utama adalah inti yang mencakup seluruh isi teks.<br>
       Paragraf 1: trotoar yang buruk membuat orang enggan berjalan. Paragraf 2: trotoar yang baik mendorong orang berjalan atau naik angkutan umum. Keduanya menunjukkan bahwa <b>mutu fasilitas pejalan kaki memengaruhi pilihan transportasi warga</b>.<br>
-      Pilihan A, B, dan D tidak dinyatakan sebagai inti teks.`,
+      Tiga pilihan lainnya tidak dinyatakan sebagai inti teks.`,
   },
   /* 2 */ {
     type: "mc", passage: P1.html, passageTitle: P1.title,
@@ -54,8 +54,8 @@ const BAHASA_QUESTIONS = [
       "Penambahan angkutan umum sama sekali tidak bermanfaat bagi warga.",
     ],
     ans: "B",
-    hint: `Tersurat artinya tertulis langsung di teks. Paragraf 1 menyebut trotoar yang terputus, berlubang, atau dipakai lapak "memaksa pejalan kaki berjalan di badan jalan" &rarr; pilihan B.<br>
-      A: kata "segera" tidak ada di teks. C: teks hanya menyebut "banyak kota", bukan "semua". D: teks hanya menyebut menambah armada saja tidak cukup, bukan tidak bermanfaat.`,
+    hint: `Tersurat artinya tertulis langsung di teks. Paragraf 1 menyebut trotoar yang terputus, berlubang, atau dipakai lapak "memaksa pejalan kaki berjalan di badan jalan" &rarr; itulah informasi yang tersurat.<br>
+      Pilihan tentang warga yang "segera" meninggalkan kendaraan pribadi tidak ada di teks. Pilihan tentang "semua pemerintah kota" berlebihan karena teks hanya menyebut "banyak kota". Pilihan "sama sekali tidak bermanfaat" ekstrem karena teks hanya menyebut menambah armada saja tidak cukup.`,
   },
   /* 3 */ {
     type: "mc", passage: P1.html, passageTitle: P1.title,
@@ -82,7 +82,7 @@ const BAHASA_QUESTIONS = [
     ans: "C",
     hint: `Tersirat artinya tidak ditulis langsung, tetapi dapat dipahami dari isi teks.<br>
       Teks membahas trotoar, halte, dan armada angkutan yang harus saling menunjang ("perjalanan menuju dan dari halte"), sehingga tersirat bahwa fasilitas angkutan umum harus dirancang <b>sebagai sistem yang saling terhubung</b>.<br>
-      A bertentangan dengan teks, B dan D tidak didukung teks.`,
+      Pilihan yang membolehkan trotoar dipakai parkir bertentangan dengan teks, sedangkan dua pilihan lainnya tidak didukung teks.`,
   },
   /* 5 */ {
     type: "mc", passage: P1.html, passageTitle: P1.title,
@@ -133,7 +133,7 @@ const BAHASA_QUESTIONS = [
     ],
     ans: "C",
     hint: `Kalimat terakhir ("Oleh karena itu, taman, tanah terbuka, ...") adalah <b>simpulan atau implikasi</b> dari uraian sebelumnya.<br>
-      Jika dihapus, penyebab banjir tetap ada (A salah), kalimat lain tetap logis (B salah), dan jenis teks tetap eksplanasi (D salah). Yang hilang hanyalah penegasan implikasinya.`,
+      Jika dihapus, penjelasan penyebab banjir tetap ada, kalimat lain tetap logis, dan jenis teks tetap eksplanasi. Yang hilang hanyalah penegasan implikasinya.`,
   },
   /* 9 */ {
     type: "mc",
@@ -146,8 +146,8 @@ const BAHASA_QUESTIONS = [
     ],
     ans: "B",
     hint: `Kalimat efektif hemat kata, tidak berlebihan (pleonasme), dan jelas subjeknya.<br>
-      A: "para" dan pengulangan "peserta-peserta" sama-sama menyatakan jamak (berlebihan). C: "agar supaya" bermakna sama (pleonasme). D: diawali "Kepada" sehingga kalimat tidak memiliki subjek.<br>
-      B: singkat, jelas, dan bersubjek.`,
+      Kalimat yang memakai "para" sekaligus "peserta-peserta" berlebihan karena keduanya sama-sama menyatakan jamak. Kalimat yang memakai "agar supaya" juga berlebihan (pleonasme). Kalimat yang diawali "Kepada" tidak memiliki subjek.<br>
+      Kalimat yang benar singkat, jelas, dan bersubjek.`,
   },
   /* 10 */ {
     type: "mc",
@@ -163,7 +163,7 @@ const BAHASA_QUESTIONS = [
       1) Anak kalimat yang mendahului induk kalimat dipisah koma: "Setelah memeriksa hasil percobaan itu<b>,</b> Dewi ...".<br>
       2) Sebelum kutipan langsung diberi koma: "Dewi berkata<b>,</b> “...".<br>
       3) Tanda titik pada akhir kutipan langsung diletakkan <b>di dalam</b> tanda petik penutup: “... kita.<b>”</b><br>
-      Hanya pilihan C yang memenuhi ketiganya.`,
+      Hanya satu pilihan yang memenuhi ketiganya.`,
   },
   /* 11 */ {
     type: "mc",
@@ -180,7 +180,7 @@ const BAHASA_QUESTIONS = [
       &bull; <i>menganalisa</i> &rarr; <b>menganalisis</b><br>
       &bull; <i>mengkoordinir</i> &rarr; <b>mengoordinasi(kan)</b><br>
       &bull; <b>izin</b> sudah baku (bukan "ijin").<br>
-      Hanya kalimat C yang seluruh katanya baku.`,
+      Hanya satu kalimat yang seluruh katanya baku.`,
   },
   /* 12 */ {
     type: "mc",
@@ -194,7 +194,7 @@ const BAHASA_QUESTIONS = [
     ans: "C",
     hint: `Kalimat asli ambigu: "dengan senter" bisa menerangkan <i>cara memeriksa</i> atau <i>penumpang yang membawa senter</i>.<br>
       Agar jelas bahwa senter adalah alat, tempatkan di awal dengan kata "menggunakan": "<b>Dengan menggunakan senter</b>, petugas memeriksa penumpang."<br>
-      B masih bisa bermakna ganda, A dan D mengubah makna.`,
+      Kalimat "Petugas dengan senter memeriksa penumpang" masih bisa bermakna ganda, sedangkan dua pilihan lainnya mengubah makna.`,
   },
   /* 13 */ {
     type: "mc",
@@ -246,7 +246,7 @@ const BAHASA_QUESTIONS = [
     ],
     ans: "C",
     hint: `Amanat harus sesuai seluruh cerita tanpa berlebihan. Arga memilih membantu ayahnya karena peduli, jadi amanatnya: <b>kepedulian membuat kita mempertimbangkan kepentingan orang lain</b>.<br>
-      A memakai kata "selalu" (terlalu mutlak), B dan D tidak ada dasarnya di cerita.`,
+      Pilihan yang memakai kata "selalu" terlalu mutlak, dan dua pilihan lainnya tidak punya dasar di cerita.`,
   },
   /* 18 */ {
     type: "mc", passage: P3.html, passageTitle: P3.title,
@@ -322,7 +322,7 @@ const BAHASA_QUESTIONS = [
     ],
     ans: "B",
     hint: `Kritis berarti menguji hubungan sebab-akibat. Atlet juara meminum produk itu belum membuktikan bahwa produk itulah penyebab kemenangannya (korelasi bukan sebab-akibat). Perlu <b>bukti yang memadai</b>.<br>
-      A terlalu percaya, C dan D terlalu ekstrem.`,
+      Pilihan yang langsung percaya terlalu naif, sedangkan pilihan yang menolak semua iklan atau semua hubungan terlalu ekstrem.`,
   },
   /* 25 */ {
     type: "mc",
@@ -335,6 +335,6 @@ const BAHASA_QUESTIONS = [
     ],
     ans: "C",
     hint: `Simpulan yang aman hanya memakai informasi yang ada: siswa memanfaatkan ruang baca setelah jam sekolah untuk tugas kelompok dan membaca (beberapa kegiatan belajar).<br>
-      A ("seluruh siswa"), B (nilai naik), dan D (alasan utama) <b>melampaui</b> informasi teks.`,
+      Pilihan "seluruh siswa", "nilai naik", dan "alasan utama" <b>melampaui</b> informasi teks.`,
   },
 ];

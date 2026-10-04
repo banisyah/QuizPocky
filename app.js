@@ -3,6 +3,39 @@ const sheetBg = document.getElementById("sheetBg");
 const sheet = document.getElementById("sheet");
 const LETTERS = ["A", "B", "C", "D"];
 let QUIZ = null, QUESTIONS = [], N = 0;   // paket soal yang sedang dikerjakan
+let RUN = null;                            // {id, vKey, picks, base, poolSrc}: versi/mode yang sedang berjalan
+
+/* penanda "sudah dikerjakan" disimpan di browser (localStorage); semua akses dibungkus try/catch */
+const STORE_KEY = "quizpocky:v1";
+const loadStore = () => { try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch { return {}; } };
+const doneInfo = (id, v) => loadStore()[id]?.[v];
+function saveResult(id, v, score, total) {
+  try {
+    const s = loadStore(), q = (s[id] = s[id] || {}), prev = q[v];
+    q[v] = { best: Math.max(prev?.best ?? 0, score), total, last: score, at: Date.now(), n: (prev?.n || 0) + 1 };
+    localStorage.setItem(STORE_KEY, JSON.stringify(s));
+  } catch { /* penyimpanan tidak tersedia: abaikan */ }
+}
+const clearStore = () => { try { localStorage.removeItem(STORE_KEY); } catch { /* abaikan */ } };
+
+const shuffle = (a) => { for (let k = a.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [a[k], a[j]] = [a[j], a[k]]; } return a; };
+function prepQ(q, doShuffle) {
+  const c = { ...q, done: false };
+  if (doShuffle && q.type === "mc") {
+    const right = q.opts[LETTERS.indexOf(q.ans)];
+    c.opts = shuffle(q.opts.slice());
+    c.ans = LETTERS[c.opts.indexOf(right)];
+  }
+  return c;
+}
+const baseV = () => (RUN.vKey === "wrong" ? RUN.base : RUN.vKey);
+const vLabel = (v) => (v === "mix" ? "Acak" : v === "wrong" ? "Ulang yang salah" : `Versi ${v}`);
+const crumbText = () => QUIZ.short + (QUIZ.versions.length > 1 || RUN.vKey === "wrong" ? " · " + vLabel(RUN.vKey) : "");
+function nextVersion(cur) {   // versi lain yang belum dikerjakan; kalau semua sudah, lanjut ke versi berikutnya
+  const ids = QUIZ.versions.map((v) => v.id), at = ids.indexOf(cur);
+  const order = ids.map((_, k) => ids[(at + 1 + k) % ids.length]).filter((v) => v !== cur);
+  return order.find((v) => !doneInfo(QUIZ.id, v)) || order[0];
+}
 
 const svg = (d) => `<svg class="i" viewBox="0 0 24 24">${d}</svg>`;
 const ICON = {
@@ -40,7 +73,7 @@ function shell(body, { wide = false, restart = false, home = false } = {}) {
   return `
     <div class="panel ${wide ? "wide" : ""}">
       <div class="phead">
-        <div class="ttl">${ICON.timer} QuizPocky${QUIZ && (restart || home) ? `<span class="crumb">${QUIZ.short}</span>` : ""}</div>
+        <div class="ttl">${ICON.timer} QuizPocky${QUIZ && (restart || home) ? `<span class="crumb">${crumbText()}</span>` : ""}</div>
         ${home ? `<button class="iconbtn flat" id="home" aria-label="Pilih soal lain" title="Pilih soal lain">${ICON.home}</button>` : ""}
         ${restart ? `<button class="iconbtn" id="restart" aria-label="Mulai ulang" title="Mulai ulang">${ICON.refresh}</button>` : ""}
       </div>
@@ -49,7 +82,7 @@ function shell(body, { wide = false, restart = false, home = false } = {}) {
 }
 function bindRestart(inProgress = true) {
   const r = $("#restart"), h = $("#home");
-  if (r) r.onclick = () => { if (confirm("Mulai ulang quiz dari awal?")) go(() => startQuiz(QUIZ.id)); };
+  if (r) r.onclick = () => { if (confirm("Mulai ulang quiz dari awal?")) go(() => startQuiz(RUN.id, RUN.vKey, { picks: RUN.picks, pool: RUN.poolSrc, base: RUN.base })); };
   if (h) h.onclick = () => { if (!inProgress || confirm("Keluar dan pilih soal lain? Progress quiz ini akan hilang.")) go(landing); };
 }
 
@@ -83,9 +116,59 @@ function confetti(x, y, n = 28, spread = 1) {
 }
 
 /* ---------- landing: pilih paket soal ---------- */
+function quizCard(z, k) {
+  const first = z.versions[0].questions, mc = first.filter((q) => q.type === "mc").length, num = first.length - mc;
+  const tags = `
+    <span class="badge blue">${z.level}</span>
+    <span class="badge gray">${first.length} soal</span>
+    <span class="badge gray">${num ? `${mc} pilgan + ${num} isian` : "Pilihan ganda"}</span>`;
+  if (z.versions.length === 1) {
+    const d = doneInfo(z.id, "1");
+    return `
+      <button class="qz rise" style="--i:${k + 1}" data-id="${z.id}" data-v="1">
+        <div class="mono">${z.mono}</div>
+        <div class="qz-body">
+          <div class="qz-title">${z.title}</div>
+          <div class="qz-org muted">${z.org}</div>
+          <p class="qz-desc">${z.desc}</p>
+          <div class="qz-tags">${tags}${d ? `<span class="badge green">${ICON.check} Sudah dikerjakan · ${d.best}/${d.total}</span>` : ""}</div>
+        </div>
+        <span class="qz-go">${ICON.arrow}</span>
+      </button>`;
+  }
+  const ids = z.versions.map((v) => v.id);
+  const rec = ids.find((v) => !doneInfo(z.id, v));
+  const cta = rec ? `Mulai Versi ${rec}` : "Latihan acak (campur semua versi)";
+  return `
+    <article class="qz multi rise" style="--i:${k + 1}">
+      <div class="qz-top">
+        <div class="mono">${z.mono}</div>
+        <div class="qz-body">
+          <div class="qz-title">${z.title}</div>
+          <div class="qz-org muted">${z.org}</div>
+          <p class="qz-desc">${z.desc}</p>
+          <div class="qz-tags">${tags}<span class="badge gray">${ids.length} versi</span></div>
+        </div>
+      </div>
+      <div class="vers">
+        <div class="vers-lbl">Pilih versi soal</div>
+        <div class="vchips">
+          ${z.versions.map((v) => {
+            const d = doneInfo(z.id, v.id);
+            return `<button class="vchip ${d ? "done" : ""}" data-id="${z.id}" data-v="${v.id}"><span class="vn">Versi ${v.id}</span><span class="vs">${d ? `${ICON.check} ${d.best}/${d.total}` : "Belum dicoba"}</span></button>`;
+          }).join("")}
+          <button class="vchip mix" data-id="${z.id}" data-v="mix"><span class="vn">Acak</span><span class="vs">Campur versi</span></button>
+        </div>
+        <p class="vers-note muted">Topik tiap nomor sama di semua versi, hanya teks dan kalimatnya yang berbeda.</p>
+        <button class="btn dark cta" data-id="${z.id}" data-v="${rec || "mix"}">${cta} ${ICON.arrow}</button>
+      </div>
+    </article>`;
+}
+
 function landing() {
-  QUIZ = null; QUESTIONS = []; N = 0;
+  QUIZ = null; RUN = null; QUESTIONS = []; N = 0;
   closeSheet();
+  const hasMarks = Object.keys(loadStore()).length > 0;
   app.innerHTML = shell(`
     <div class="screen">
       <div class="hero">
@@ -93,36 +176,29 @@ function landing() {
         <h1>Latihan Math Competition</h1>
         <p class="muted">Pilih paket soal yang mau kamu kerjakan. Ada hint dan cara pengerjaan di setiap nomor.</p>
       </div>
-      <div class="picker">
-        ${QUIZZES.map((z, k) => {
-          const mc = z.questions.filter((q) => q.type === "mc").length, num = z.questions.length - mc;
-          return `
-          <button class="qz rise" style="--i:${k + 1}" data-id="${z.id}">
-            <div class="mono">${z.mono}</div>
-            <div class="qz-body">
-              <div class="qz-title">${z.title}</div>
-              <div class="qz-org muted">${z.org}</div>
-              <p class="qz-desc">${z.desc}</p>
-              <div class="qz-tags">
-                <span class="badge blue">${z.level}</span>
-                <span class="badge gray">${z.questions.length} soal</span>
-                <span class="badge gray">${num ? `${mc} pilgan + ${num} isian` : "Pilihan ganda"}</span>
-              </div>
-            </div>
-            <span class="qz-go">${ICON.arrow}</span>
-          </button>`;
-        }).join("")}
-      </div>
+      <div class="picker">${QUIZZES.map(quizCard).join("")}</div>
+      ${hasMarks ? `<div class="retry-wrap"><button class="linkbtn" id="resetmarks">Hapus penanda "sudah dikerjakan"</button></div>` : ""}
     </div>`, { wide: true });
-  app.querySelectorAll(".qz").forEach((b) => (b.onclick = () => go(() => startQuiz(b.dataset.id))));
+  app.querySelectorAll("button[data-v]").forEach((b) => (b.onclick = () => go(() => startQuiz(b.dataset.id, b.dataset.v))));
+  const rm = $("#resetmarks");
+  if (rm) rm.onclick = () => { if (confirm("Hapus semua penanda versi yang sudah dikerjakan di browser ini?")) { clearStore(); landing(); } };
   window.scrollTo(0, 0);
 }
 
-function startQuiz(id) {
-  QUIZ = QUIZZES.find((z) => z.id === id);
-  QUESTIONS = QUIZ.questions; N = QUESTIONS.length;
+/* vKey: "1" | "2" | "3" (versi), "mix" (acak per nomor), "wrong" (ulang soal yang salah saja) */
+function startQuiz(id, vKey = "1", opts = {}) {
+  const quiz = QUIZZES.find((z) => z.id === id);
+  QUIZ = quiz;
+  let list, picks;
+  if (opts.pool) list = opts.pool;
+  else if (vKey === "mix") {
+    const slots = quiz.versions[0].questions.length;
+    picks = opts.picks || Array.from({ length: slots }, () => Math.floor(Math.random() * quiz.versions.length));
+    list = picks.map((vi, k) => quiz.versions[vi].questions[k]);
+  } else list = (quiz.versions.find((v) => v.id === vKey) || quiz.versions[0]).questions;
+  RUN = { id, vKey, picks, base: opts.base, poolSrc: opts.pool };
+  QUESTIONS = list.map((q) => prepQ(q, quiz.shuffle)); N = QUESTIONS.length;
   i = 0; answers = []; locked = false; hintOpen = false;
-  QUESTIONS.forEach((q) => (q.done = false));
   showQuestion();
 }
 
@@ -162,7 +238,7 @@ function showQuestion() {
     <div class="quiz screen">
       <div class="main" style="display:grid;gap:16px;min-width:0;align-content:start">
         <div class="metabar">
-          <div class="c">${ICON.book} <span>${QUIZ.title}</span></div>
+          <div class="c">${ICON.book} <span>${QUIZ.title}</span>${QUIZ.versions.length > 1 || RUN.vKey === "wrong" ? `<span class="badge gray">${vLabel(RUN.vKey)}</span>` : ""}</div>
           <div class="sc" id="score"></div>
         </div>
         <div class="strip" id="strip"></div>
@@ -278,6 +354,9 @@ function showResult() {
   QUESTIONS.forEach((q, k) => { if (!isCorrect(q, answers[k])) wrong.push(k); });
   const right = N - wrong.length;
   const pct = Math.round((right / N) * 100);
+  if (RUN.vKey !== "wrong") saveResult(QUIZ.id, RUN.vKey, right, N);
+  const multi = QUIZ.versions.length > 1, bv = baseV();
+  const nv = multi ? (bv === "mix" ? "mix" : nextVersion(bv)) : null;
   const msg = pct === 100 ? "Sempurna!" : pct >= 80 ? "Hebat banget!" : pct >= 60 ? "Bagus, terus latihan!" : "Jangan menyerah, coba lagi!";
 
   app.innerHTML = shell(`
@@ -298,9 +377,16 @@ function showResult() {
           <div class="pills">${wrong.map((k) => `<span class="pill">${k + 1}</span>`).join("")}</div></div>` : ""}
       </section>
       ${wrong.length ? `<h2 class="section-title">Jawaban yang seharusnya</h2>${wrong.map(reviewItem).join("")}` : ""}
-      <div class="retry-wrap"><button class="btn dark big" id="retry">${ICON.refresh} Ulangi Quiz</button><button class="btn big" id="other">${ICON.home} Pilih Soal Lain</button></div>
+      <div class="result-actions">
+        <button class="btn dark big" id="retry">${ICON.refresh} Ulangi soal yang sama</button>
+        ${multi ? `<button class="btn big" id="newv">${ICON.arrow} ${nv === "mix" ? "Acak lagi (campuran baru)" : `Coba soal baru · Versi ${nv}`}</button>` : ""}
+        ${wrong.length ? `<button class="btn big" id="onlywrong">${ICON.cross} Ulangi yang salah saja (${wrong.length})</button>` : ""}
+        <button class="btn big" id="other">${ICON.home} Pilih Soal Lain</button>
+      </div>
     </div>`);
-  $("#retry").onclick = () => go(() => startQuiz(QUIZ.id));
+  $("#retry").onclick = () => go(() => startQuiz(QUIZ.id, RUN.vKey, { picks: RUN.picks, pool: RUN.poolSrc, base: RUN.base }));
+  const nb = $("#newv"); if (nb) nb.onclick = () => go(() => startQuiz(QUIZ.id, nv));
+  const ow = $("#onlywrong"); if (ow) ow.onclick = () => go(() => startQuiz(QUIZ.id, "wrong", { pool: wrong.map((k) => QUESTIONS[k]), base: bv }));
   $("#other").onclick = () => go(landing);
   typeset(app);
   window.scrollTo(0, 0);
