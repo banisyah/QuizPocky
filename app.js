@@ -28,6 +28,7 @@ function prepQ(q, doShuffle) {
   }
   return c;
 }
+const curTag = () => (QUIZ.versions.find((v) => v.id === (RUN.vKey === "wrong" ? RUN.base : RUN.vKey)) || {}).tag;
 const baseV = () => (RUN.vKey === "wrong" ? RUN.base : RUN.vKey);
 const vLabel = (v) => (v === "mix" ? "Acak" : v === "wrong" ? "Ulang yang salah" : `Versi ${v}`);
 const crumbText = () => QUIZ.short + (QUIZ.versions.length > 1 || RUN.vKey === "wrong" ? " · " + vLabel(RUN.vKey) : "");
@@ -117,11 +118,13 @@ function confetti(x, y, n = 28, spread = 1) {
 
 /* ---------- landing: pilih paket soal ---------- */
 function quizCard(z, k) {
-  const first = z.versions[0].questions, mc = first.filter((q) => q.type === "mc").length, num = first.length - mc;
+  const lens = z.versions.map((v) => v.questions.length), nmin = Math.min(...lens), nmax = Math.max(...lens);
+  const hasNum = z.versions.some((v) => v.questions.some((q) => q.type !== "mc"));
+  const mc = z.versions[0].questions.filter((q) => q.type === "mc").length, num = z.versions[0].questions.length - mc;
   const tags = `
     <span class="badge blue">${z.level}</span>
-    <span class="badge gray">${first.length} soal</span>
-    <span class="badge gray">${num ? `${mc} pilgan + ${num} isian` : "Pilihan ganda"}</span>`;
+    <span class="badge gray">${nmin === nmax ? nmin : `${nmin}–${nmax}`} soal</span>
+    <span class="badge gray">${hasNum ? (z.versions.length > 1 ? "Pilgan + isian" : `${mc} pilgan + ${num} isian`) : "Pilihan ganda"}</span>`;
   if (z.versions.length === 1) {
     const d = doneInfo(z.id, "1");
     return `
@@ -138,7 +141,9 @@ function quizCard(z, k) {
   }
   const ids = z.versions.map((v) => v.id);
   const rec = ids.find((v) => !doneInfo(z.id, v));
-  const cta = rec ? `Mulai Versi ${rec}` : "Latihan acak (campur semua versi)";
+  const canMix = z.mix !== false;
+  const again = canMix ? "mix" : ids[0];
+  const cta = rec ? `Mulai Versi ${rec}` : canMix ? "Latihan acak (campur semua versi)" : "Semua versi selesai · Ulangi Versi 1";
   return `
     <article class="qz multi rise" style="--i:${k + 1}">
       <div class="qz-top">
@@ -155,12 +160,12 @@ function quizCard(z, k) {
         <div class="vchips">
           ${z.versions.map((v) => {
             const d = doneInfo(z.id, v.id);
-            return `<button class="vchip ${d ? "done" : ""}" data-id="${z.id}" data-v="${v.id}"><span class="vn">Versi ${v.id}</span><span class="vs">${d ? `${ICON.check} ${d.best}/${d.total}` : "Belum dicoba"}</span></button>`;
+            return `<button class="vchip ${d ? "done" : ""}" data-id="${z.id}" data-v="${v.id}"><span class="vn">Versi ${v.id}</span>${v.tag ? `<span class="vt">${v.tag}</span>` : ""}<span class="vs">${d ? `${ICON.check} ${d.best}/${d.total}` : `${v.questions.length} soal`}</span></button>`;
           }).join("")}
-          <button class="vchip mix" data-id="${z.id}" data-v="mix"><span class="vn">Acak</span><span class="vs">Campur versi</span></button>
+          ${canMix ? `<button class="vchip mix" data-id="${z.id}" data-v="mix"><span class="vn">Acak</span><span class="vs">Campur versi</span></button>` : ""}
         </div>
-        <p class="vers-note muted">Topik tiap nomor sama di semua versi, hanya teks dan kalimatnya yang berbeda.</p>
-        <button class="btn dark cta" data-id="${z.id}" data-v="${rec || "mix"}">${cta} ${ICON.arrow}</button>
+        <p class="vers-note muted">${z.versionNote || ""}</p>
+        <button class="btn dark cta" data-id="${z.id}" data-v="${rec || again}">${cta} ${ICON.arrow}</button>
       </div>
     </article>`;
 }
@@ -238,7 +243,7 @@ function showQuestion() {
     <div class="quiz screen">
       <div class="main" style="display:grid;gap:16px;min-width:0;align-content:start">
         <div class="metabar">
-          <div class="c">${ICON.book} <span>${QUIZ.title}</span>${QUIZ.versions.length > 1 || RUN.vKey === "wrong" ? `<span class="badge gray">${vLabel(RUN.vKey)}</span>` : ""}</div>
+          <div class="c">${ICON.book} <span>${curTag() || QUIZ.title}</span>${QUIZ.versions.length > 1 || RUN.vKey === "wrong" ? `<span class="badge gray">${vLabel(RUN.vKey)}</span>` : ""}</div>
           <div class="sc" id="score"></div>
         </div>
         <div class="strip" id="strip"></div>
