@@ -5,16 +5,17 @@ const QUIZZES = [
   {
     id: "emc2025",
     short: "EMC · Kelas 7",
-    title: "EMC · Kelas 7 (2025 & 2024)",
+    title: "EMC · Kelas 7",
     org: "Eduversal Mathematics Competition",
     level: "Kelas 7",
-    desc: "Aljabar, geometri, peluang, dan teori bilangan dasar untuk kelas 7. Campuran pilihan ganda dan isian singkat. Ada 2 paket: EMC 2025 dan EMC 2024.",
+    desc: "Aljabar, geometri, peluang, dan teori bilangan dasar untuk kelas 7. Campuran pilihan ganda dan isian singkat. Ada 3 paket: EMC 2025 Tingkat Kota, EMC 2024 Penyisihan, dan EMC 2025 Tingkat Provinsi.",
     mono: "EMC",
     mix: false,   // versi berbeda bukan pasangan topik per nomor, jadi tidak ada mode Acak
-    versionNote: "Versi 1 berisi soal EMC 2025 Tingkat Kota. Versi 2 berisi soal EMC 2024 Babak Penyisihan (beberapa soal yang kuncinya meragukan tidak dimasukkan).",
+    versionNote: "Tiap versi adalah paket soal EMC yang berbeda (bukan pasangan topik per nomor). Soal yang kuncinya meragukan tidak dimasukkan.",
     versions: [
       { id: "1", tag: "EMC 2025 · Tingkat Kota", questions: EMC_QUESTIONS },
       { id: "2", tag: "EMC 2024 · Penyisihan", questions: EMC24_QUESTIONS },
+      { id: "3", tag: "EMC 2025 · Provinsi", questions: EMCPV_QUESTIONS },
     ],
   },
   {
