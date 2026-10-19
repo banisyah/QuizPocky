@@ -1,6 +1,6 @@
 // Sumber soal: EMC 2025 (Eduversal Mathematics Competition) Tingkat Provinsi, Kelas 7.
 // Soal pilgan memakai kunci resmi dari PDF (sudah dicek ulang). Soal isian (31-35) tidak punya kunci di PDF,
-// jawabannya dihitung sendiri. Tidak dimasukkan: no. 10 (kunci bergantung tafsir) dan no. 19 (jawaban sebenarnya 180, tidak ada di pilihan).
+// jawabannya dihitung sendiri. Tidak dimasukkan: no. 10 (kunci bergantung tafsir). No. 19 dimasukkan dengan kunci resmi 300, tetapi jawaban matematis sebenarnya 180 (dicatat di hint).
 const rp = String.raw;
 
 const EMCPV_QUESTIONS = [
@@ -150,6 +150,20 @@ const EMCPV_QUESTIONS = [
     ans: "C",
     hint: rp`$f(2)=6-a=11\Rightarrow a=-5$, sehingga $f(x)=3x+5$.<br>
       $f(-3)=3(-3)+5=-4$.`,
+  },
+  /* 19 */ {
+    type: "mc",
+    q: rp`Bilangan $N$ adalah bilangan <b>terkecil</b> yang memenuhi syarat berikut:<br>
+      1. $N$ habis dibagi 12, 15, dan 20.<br>
+      2. Banyak faktor positif dari $N$ adalah 18.<br>
+      <b>Nilai $N$ adalah ... .</b>`,
+    opts: ["240", "300", "120", "360"],
+    ans: "B",
+    hint: rp`$N$ harus kelipatan $\text{KPK}(12,15,20)=60$: $60,120,180,240,300,360,\ldots$<br>
+      <b>Cara menjawab dari pilihan:</b> hitung banyak faktor tiap opsi dengan rumus pangkat prima.<br>
+      $120=2^3\cdot3\cdot5\to4\cdot2\cdot2=16$ &nbsp; $240=2^4\cdot3\cdot5\to5\cdot2\cdot2=20$ &nbsp; $300=2^2\cdot3\cdot5^2\to3\cdot2\cdot3=18$ ✓ &nbsp; $360=2^3\cdot3^2\cdot5\to4\cdot3\cdot2=24$.<br>
+      Hanya $300$ yang punya 18 faktor, jadi kunci resmi adalah $300$.<br>
+      <i>Catatan penting: soal ini cacat. Jika semua kelipatan 60 dicek, $180=2^2\cdot3^2\cdot5$ juga punya $3\cdot3\cdot2=18$ faktor dan lebih kecil dari 300. Jawaban matematis sebenarnya adalah <b>180</b>, tetapi tidak ada di pilihan. Pada ujian pilihan ganda, pilih satu-satunya opsi yang memenuhi syarat, yaitu 300.</i>`,
   },
   /* 20 */ {
     type: "mc",
