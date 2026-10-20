@@ -361,3 +361,18 @@ pre.sum { display: inline-block; margin: 14px 0 0; padding: 12px 18px; border-ra
 .qtext table.tbl { border-collapse: collapse; margin: 12px 0 16px; width: 100%; max-width: 360px; font-size: .95rem; }
 .qtext table.tbl th, .qtext table.tbl td { border: 1px solid var(--line); padding: 6px 12px; text-align: center; }
 .qtext table.tbl th { background: var(--soft-2); font-weight: 700; }
+
+/* timer di metabar (paket Math) */
+.tchips { display: flex; gap: 6px; flex: none; }
+.tchip {
+  display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 10px; border-radius: 10px;
+  background: var(--panel); border: 1px solid var(--line); font-variant-numeric: tabular-nums;
+  transition: background .3s, border-color .3s, color .3s;
+}
+.tchip small { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.tchip b { font-size: .95rem; }
+.tchip.over { background: var(--bad-soft); border-color: transparent; color: var(--bad); }
+.tchip.over small { color: var(--bad); }
+@media (max-width: 560px) { .tchip small { display: none; } .tchips { gap: 4px; } }
+.metabar { flex-wrap: wrap; }
+.metabar .c { flex: 1 1 180px; min-width: 0; flex-wrap: wrap; }

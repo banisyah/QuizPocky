@@ -10,6 +10,7 @@ const QUIZZES = [
     level: "Kelas 7",
     desc: "Aljabar, geometri, peluang, dan teori bilangan dasar untuk kelas 7. Campuran pilihan ganda dan isian singkat. Ada 3 paket: EMC 2025 Tingkat Kota, EMC 2024 Penyisihan, dan EMC 2025 Tingkat Provinsi.",
     mono: "EMC",
+    timed: true,  // timer 3 menit per soal (tanpa konsekuensi) + total timer
     mix: false,   // versi berbeda bukan pasangan topik per nomor, jadi tidak ada mode Acak
     versionNote: "Tiap versi adalah paket soal EMC yang berbeda (bukan pasangan topik per nomor). Soal yang kuncinya meragukan tidak dimasukkan.",
     versions: [
@@ -26,6 +27,7 @@ const QUIZZES = [
     level: "Level 4 · SMP",
     desc: "Soal olimpiade: aljabar, teori bilangan, geometri, dan kombinatorika. Semua pilihan ganda.",
     mono: "IY",
+    timed: true,
     versions: [{ id: "1", questions: IYSLO_QUESTIONS }],
   },
   {

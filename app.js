@@ -54,6 +54,27 @@ const logoBig = ICON.logo;
 
 let i = 0, answers = [], locked = false, hintOpen = false;
 
+/* ---------- timer: hanya paket Math (timed: true). Tidak ada konsekuensi jika waktu habis, hanya penanda. ---------- */
+const PER_Q = 180;                                  // 3 menit per soal (detik)
+const TM = { qEnd: 0, qFrozen: null, tEnd: 0, tFrozen: null, iv: null };
+const fmtT = (s) => { s = Math.max(0, Math.ceil(s)); return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0"); };
+const qLeft = () => (TM.qFrozen ?? (TM.qEnd - Date.now()) / 1000);
+const tLeft = () => (TM.tFrozen ?? (TM.tEnd - Date.now()) / 1000);
+function tickTimers() {
+  const q = document.getElementById("qtime"), t = document.getElementById("ttime");
+  if (!q && !t) { clearInterval(TM.iv); TM.iv = null; return; }   // tidak ada tampilan timer: hentikan interval
+  if (q) { const s = qLeft(); q.textContent = fmtT(s); q.parentElement.classList.toggle("over", s <= 0); }
+  if (t) { const s = tLeft(); t.textContent = fmtT(s); t.parentElement.classList.toggle("over", s <= 0); }
+}
+const ensureTick = () => { if (!TM.iv) TM.iv = setInterval(tickTimers, 250); };
+function startQTimer() { TM.qEnd = Date.now() + PER_Q * 1000; TM.qFrozen = null; ensureTick(); }
+function stopQTimer() { if (TM.qFrozen === null) TM.qFrozen = Math.max(0, TM.qEnd - Date.now()) / 1000; }
+function startTotal(n) { TM.tEnd = Date.now() + n * PER_Q * 1000; TM.tFrozen = null; ensureTick(); }
+function stopAllTimers() {
+  stopQTimer();
+  if (TM.tFrozen === null) TM.tFrozen = Math.max(0, TM.tEnd - Date.now()) / 1000;
+}
+
 const $ = (s, el = app) => el.querySelector(s);
 const typeset = (el = document.body) =>
   window.renderMathInElement && renderMathInElement(el, {
@@ -123,6 +144,7 @@ function quizCard(z, k) {
   const mc = z.versions[0].questions.filter((q) => q.type === "mc").length, num = z.versions[0].questions.length - mc;
   const tags = `
     <span class="badge blue">${z.level}</span>
+    ${z.timed ? `<span class="badge gray">⏱ 3 menit/soal</span>` : ""}
     <span class="badge gray">${nmin === nmax ? nmin : `${nmin}–${nmax}`} soal</span>
     <span class="badge gray">${hasNum ? (z.versions.length > 1 ? "Pilgan + isian" : `${mc} pilgan + ${num} isian`) : "Pilihan ganda"}</span>`;
   if (z.versions.length === 1) {
@@ -171,6 +193,7 @@ function quizCard(z, k) {
 }
 
 function landing() {
+  stopAllTimers();
   QUIZ = null; RUN = null; QUESTIONS = []; N = 0;
   closeSheet();
   const hasMarks = Object.keys(loadStore()).length > 0;
@@ -204,6 +227,7 @@ function startQuiz(id, vKey = "1", opts = {}) {
   RUN = { id, vKey, picks, base: opts.base, poolSrc: opts.pool };
   QUESTIONS = list.map((q) => prepQ(q, quiz.shuffle)); N = QUESTIONS.length;
   i = 0; answers = []; locked = false; hintOpen = false;
+  if (quiz.timed) startTotal(N);   // total = jumlah soal x 3 menit
   showQuestion();
 }
 
@@ -239,11 +263,17 @@ function refreshNav() {
 function showQuestion() {
   const q = QUESTIONS[i];
   locked = false; hintOpen = false;
+  if (QUIZ.timed) startQTimer();   // setiap soal mulai dari 3 menit
+  const timers = QUIZ.timed ? `<div class="tchips">
+            <span class="tchip"><small>Soal ini</small><b id="qtime">${fmtT(qLeft())}</b></span>
+            <span class="tchip"><small>Total</small><b id="ttime">${fmtT(tLeft())}</b></span>
+          </div>` : "";
   app.innerHTML = shell(`
     <div class="quiz screen">
       <div class="main" style="display:grid;gap:16px;min-width:0;align-content:start">
         <div class="metabar">
           <div class="c">${ICON.book} <span>${curTag() || QUIZ.title}</span>${QUIZ.versions.length > 1 || RUN.vKey === "wrong" ? `<span class="badge gray">${vLabel(RUN.vKey)}</span>` : ""}</div>
+          ${timers}
           <div class="sc" id="score"></div>
         </div>
         <div class="strip" id="strip"></div>
@@ -298,6 +328,7 @@ function showQuestion() {
 function submitAnswer() {
   const q = QUESTIONS[i];
   locked = true; q.done = true;
+  if (QUIZ.timed) stopQTimer();   // waktu soal berhenti saat dijawab
   const ok = isCorrect(q, answers[i]);
   $("#submit").disabled = true;
 
@@ -355,6 +386,7 @@ function closeSheet() { sheet.classList.remove("show"); sheetBg.classList.remove
 
 /* ---------- result ---------- */
 function showResult() {
+  stopAllTimers();
   const wrong = [];
   QUESTIONS.forEach((q, k) => { if (!isCorrect(q, answers[k])) wrong.push(k); });
   const right = N - wrong.length;
